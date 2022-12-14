@@ -1,0 +1,1 @@
+CONFIG_LDFLAGS += -fuse-ld=gold

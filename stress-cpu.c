@@ -32,6 +32,8 @@
 #include <complex.h>
 #endif
 
+#include "perf-counter.h"
+
 /*
  *  S390x on QEMU (and maybe H/W) trips SIGILL for decimal
  *  math with some compilers, so disable this for now
@@ -72,7 +74,7 @@
 /*
  *  the CPU stress test has different classes of cpu stressor
  */
-typedef void (*stress_cpu_func)(const char *name);
+typedef void (*stress_cpu_func)(const char *name, perf_counter_array* counters);
 
 typedef struct {
 	const char		*name;	/* human readable form of stressor */
@@ -131,7 +133,7 @@ static int stress_set_cpu_load_slice(const char *opt)
  *  stress_cpu_sqrt()
  *	stress CPU on square roots
  */
-static void TARGET_CLONES stress_cpu_sqrt(const char *name)
+static void TARGET_CLONES stress_cpu_sqrt(const char *name, perf_counter_array*)
 {
 	int i;
 
@@ -192,7 +194,7 @@ static bool stress_is_affinity_set(void)
  *  stress_cpu_loop()
  *	simple CPU busy loop
  */
-static void OPTIMIZE0 stress_cpu_loop(const char *name)
+static void OPTIMIZE0 stress_cpu_loop(const char *name, perf_counter_array*)
 {
 	uint32_t i, i_sum = 0;
 	const uint32_t sum = 134209536UL;
@@ -211,7 +213,7 @@ static void OPTIMIZE0 stress_cpu_loop(const char *name)
  *  stress_cpu_gcd()
  *	compute Greatest Common Divisor
  */
-static void OPTIMIZE3 TARGET_CLONES stress_cpu_gcd(const char *name)
+static void OPTIMIZE3 TARGET_CLONES stress_cpu_gcd(const char *name, perf_counter_array*)
 {
 	uint32_t i, gcd_sum = 0;
 	const uint32_t gcd_checksum = 63000868UL;
@@ -244,7 +246,7 @@ static void OPTIMIZE3 TARGET_CLONES stress_cpu_gcd(const char *name)
  *	various bit manipulation hacks from bithacks
  *	https://graphics.stanford.edu/~seander/bithacks.html
  */
-static void OPTIMIZE3 TARGET_CLONES stress_cpu_bitops(const char *name)
+static void OPTIMIZE3 TARGET_CLONES stress_cpu_bitops(const char *name, perf_counter_array*)
 {
 	uint32_t i, i_sum = 0;
 	const uint32_t sum = 0x8aac0aab;
@@ -305,7 +307,7 @@ static void OPTIMIZE3 TARGET_CLONES stress_cpu_bitops(const char *name)
  *  stress_cpu_trig()
  *	simple sin, cos trig functions
  */
-static void HOT stress_cpu_trig(const char *name)
+static void HOT stress_cpu_trig(const char *name, perf_counter_array*)
 {
 	int i;
 	long double d_sum = 0.0L;
@@ -348,7 +350,7 @@ static void HOT stress_cpu_trig(const char *name)
  *  stress_cpu_hyperbolic()
  *	simple hyperbolic sinh, cosh functions
  */
-static void HOT stress_cpu_hyperbolic(const char *name)
+static void HOT stress_cpu_hyperbolic(const char *name, perf_counter_array*)
 {
 	int i;
 	long double d_sum = 0.0L;
@@ -391,7 +393,7 @@ static void HOT stress_cpu_hyperbolic(const char *name)
  *  stress_cpu_rand()
  *	generate lots of pseudo-random integers
  */
-static void HOT OPTIMIZE3 stress_cpu_rand(const char *name)
+static void HOT OPTIMIZE3 stress_cpu_rand(const char *name, perf_counter_array*)
 {
 	int i;
 	uint32_t i_sum = 0;
@@ -412,7 +414,7 @@ static void HOT OPTIMIZE3 stress_cpu_rand(const char *name)
  * 	accumulation point based on A098587. Data is scaled in the
  *	range 0..255
  */
-static void HOT OPTIMIZE3 stress_cpu_logmap(const char *name)
+static void HOT OPTIMIZE3 stress_cpu_logmap(const char *name, perf_counter_array*)
 {
 	static double x = 0.4;
 	/*
@@ -444,7 +446,7 @@ static void HOT OPTIMIZE3 stress_cpu_logmap(const char *name)
  *  stress_cpu_rand48()
  *	generate random values using rand48 family of functions
  */
-static void HOT OPTIMIZE3 stress_cpu_rand48(const char *name)
+static void HOT OPTIMIZE3 stress_cpu_rand48(const char *name, perf_counter_array*)
 {
 	int i;
 	double d = 0;
@@ -467,7 +469,7 @@ static void HOT OPTIMIZE3 stress_cpu_rand48(const char *name)
  *	generate 16384 values from the Galois polynomial
  *	x^32 + x^31 + x^29 + x + 1
  */
-static void HOT OPTIMIZE3 stress_cpu_lfsr32(const char *name)
+static void HOT OPTIMIZE3 stress_cpu_lfsr32(const char *name, perf_counter_array*)
 {
         static uint32_t lfsr = 0xf63acb01;
 	register int i;
@@ -484,7 +486,7 @@ static void HOT OPTIMIZE3 stress_cpu_lfsr32(const char *name)
  *  stress_cpu_nsqrt()
  *	iterative Newton-Raphson square root
  */
-static void OPTIMIZE3 TARGET_CLONES stress_cpu_nsqrt(const char *name)
+static void OPTIMIZE3 TARGET_CLONES stress_cpu_nsqrt(const char *name, perf_counter_array*)
 {
 	int i;
 	const long double precision = 1.0e-12L;
@@ -524,7 +526,7 @@ static void OPTIMIZE3 TARGET_CLONES stress_cpu_nsqrt(const char *name)
  *  stress_cpu_phi()
  *	compute the Golden Ratio
  */
-static void OPTIMIZE3 TARGET_CLONES stress_cpu_phi(const char *name)
+static void OPTIMIZE3 TARGET_CLONES stress_cpu_phi(const char *name, perf_counter_array*)
 {
 	long double phi; /* Golden ratio */
 	const long double precision = 1.0e-15L;
@@ -558,7 +560,7 @@ static void OPTIMIZE3 TARGET_CLONES stress_cpu_phi(const char *name)
  *  stress_cpu_apery()
  *      compute Apéry's constant
  */
-static void HOT OPTIMIZE3 stress_cpu_apery(const char *name)
+static void HOT OPTIMIZE3 stress_cpu_apery(const char *name, perf_counter_array*)
 {
 	uint32_t n;
 	long double a = 0.0L, a_ = a;
@@ -616,7 +618,7 @@ static void HOT OPTIMIZE3 fft_partial(
  *  stress_cpu_fft()
  *	Fast Fourier Transform
  */
-static void TARGET_CLONES UNROLL stress_cpu_fft(const char *name)
+static void TARGET_CLONES UNROLL stress_cpu_fft(const char *name, perf_counter_array*)
 {
 	static double complex buf[FFT_SIZE], tmp[FFT_SIZE];
 	int i;
@@ -637,7 +639,7 @@ static void TARGET_CLONES UNROLL stress_cpu_fft(const char *name)
  *   stress_cpu_euler()
  *	compute e using series
  */
-static void OPTIMIZE3 TARGET_CLONES stress_cpu_euler(const char *name)
+static void OPTIMIZE3 TARGET_CLONES stress_cpu_euler(const char *name, perf_counter_array*)
 {
 	long double e = 1.0L, last_e;
 	long double fact = 1.0L;
@@ -682,7 +684,7 @@ static void random_buffer(uint8_t *data, const size_t len)
  *  stress_cpu_collatz()
  *	stress test integer collatz conjecture
  */
-static void OPTIMIZE3 TARGET_CLONES stress_cpu_collatz(const char *name)
+static void OPTIMIZE3 TARGET_CLONES stress_cpu_collatz(const char *name, perf_counter_array*)
 {
 	register uint64_t n = 989345275647ULL;	/* Has 1348 steps in cycle */
 	register int i;
@@ -699,7 +701,7 @@ static void OPTIMIZE3 TARGET_CLONES stress_cpu_collatz(const char *name)
  *  stress_cpu_idct()
  *	compute 8x8 Inverse Discrete Cosine Transform
  */
-static void OPTIMIZE3 TARGET_CLONES stress_cpu_idct(const char *name)
+static void OPTIMIZE3 TARGET_CLONES stress_cpu_idct(const char *name, perf_counter_array*)
 {
 #define IDCT_SIZE	(8)
 
@@ -796,7 +798,7 @@ static void OPTIMIZE3 TARGET_CLONES stress_cpu_idct(const char *name)
  *  Generic int stressor macro
  */
 #define stress_cpu_int(_type, _sz, _a, _b, _c1, _c2, _c3)	\
-static void OPTIMIZE3 TARGET_CLONES stress_cpu_int ## _sz(const char *name)\
+static void OPTIMIZE3 TARGET_CLONES stress_cpu_int ## _sz(const char *name, perf_counter_array*)\
 {								\
 	const _type mask = (_type)~(_type)0;			\
 	const _type a_final = _a;				\
@@ -879,7 +881,7 @@ stress_cpu_int(uint8_t, 8, \
  *  Generic floating point stressor macro
  */
 #define stress_cpu_fp(_type, _name, _sin, _cos)		\
-static void OPTIMIZE3 TARGET_CLONES stress_cpu_ ## _name(const char *name)\
+static void OPTIMIZE3 TARGET_CLONES stress_cpu_ ## _name(const char *name, perf_counter_array*)\
 {							\
 	int i;						\
 	const uint32_t r1 = stress_mwc32(),		\
@@ -963,7 +965,7 @@ static inline void stress_cpu_complex_long_double_put(complex long double v)
  *  Generic complex stressor macro
  */
 #define stress_cpu_complex(_type, _ltype, _name, _csin, _ccos, _put)	\
-static void OPTIMIZE3 TARGET_CLONES stress_cpu_ ## _name(const char *name) \
+    static void OPTIMIZE3 TARGET_CLONES stress_cpu_ ## _name(const char *name, perf_counter_array*) \
 {								\
 	int i;							\
 	const uint32_t r1 = stress_mwc32(),			\
@@ -1043,7 +1045,7 @@ stress_cpu_complex(complex long double, l, complex_long_double, shim_csinl, shim
  */
 #define stress_cpu_int_fp(_inttype, _sz, _ftype, _name, _a, _b, \
 	_c1, _c2, _c3, _sinf, _cosf)				\
-static void OPTIMIZE3 TARGET_CLONES stress_cpu_int ## _sz ## _ ## _name(const char *name)\
+static void OPTIMIZE3 TARGET_CLONES stress_cpu_int ## _sz ## _ ## _name(const char *name, perf_counter_array*)\
 {								\
 	int i;							\
 	_inttype int_a, int_b;					\
@@ -1145,7 +1147,7 @@ stress_cpu_int_fp(__uint128_t, 128, _Decimal128, decimal128,
  *  stress_cpu_rgb()
  *	CCIR 601 RGB to YUV to RGB conversion
  */
-static void OPTIMIZE3 TARGET_CLONES stress_cpu_rgb(const char *name)
+static void OPTIMIZE3 TARGET_CLONES stress_cpu_rgb(const char *name, perf_counter_array*)
 {
 	int i;
 	uint32_t rgb = stress_mwc32() & 0xffffff;
@@ -1181,7 +1183,7 @@ static void OPTIMIZE3 TARGET_CLONES stress_cpu_rgb(const char *name)
  *  stress_cpu_matrix_prod(void)
  *	matrix product
  */
-static void OPTIMIZE3 TARGET_CLONES stress_cpu_matrix_prod(const char *name)
+static void OPTIMIZE3 TARGET_CLONES stress_cpu_matrix_prod(const char *name, perf_counter_array*)
 {
 	int i, j, k;
 
@@ -1222,7 +1224,7 @@ static void OPTIMIZE3 TARGET_CLONES stress_cpu_matrix_prod(const char *name)
  *   stress_cpu_fibonacci()
  *	compute fibonacci series
  */
-static void OPTIMIZE3 stress_cpu_fibonacci(const char *name)
+static void OPTIMIZE3 stress_cpu_fibonacci(const char *name, perf_counter_array*)
 {
 	const uint64_t fn_res = 0xa94fad42221f2702ULL;
 	register uint64_t f1 = 0, f2 = 1, fn;
@@ -1243,7 +1245,7 @@ static void OPTIMIZE3 stress_cpu_fibonacci(const char *name)
  *	compute the constant psi,
  * 	the reciprocal Fibonacci constant
  */
-static void OPTIMIZE3 stress_cpu_psi(const char *name)
+static void OPTIMIZE3 stress_cpu_psi(const char *name, perf_counter_array*)
 {
 	long double f1 = 0.0L, f2 = 1.0L;
 	long double psi = 0.0L, last_psi;
@@ -1278,7 +1280,7 @@ static void OPTIMIZE3 stress_cpu_psi(const char *name)
  *   stress_cpu_ln2
  *	compute ln(2) using series
  */
-static void OPTIMIZE3 TARGET_CLONES stress_cpu_ln2(const char *name)
+static void OPTIMIZE3 TARGET_CLONES stress_cpu_ln2(const char *name, perf_counter_array*)
 {
 	long double ln2 = 0.0L, last_ln2 = 0.0L;
 	long double precision = 1.0e-7L;
@@ -1310,34 +1312,44 @@ static void OPTIMIZE3 TARGET_CLONES stress_cpu_ln2(const char *name)
  *  ackermann()
  *	a naive/simple implementation of the ackermann function
  */
-static uint32_t HOT ackermann(const uint32_t m, const uint32_t n)
+static uint32_t HOT ackermann(const uint32_t m, const uint32_t n, perf_counter_array * counters) 
 {
-	if (m == 0)
-		return n + 1;
-	else if (n == 0)
-		return ackermann(m - 1, 1);
-	else
-		return ackermann(m - 1, ackermann(m, n - 1));
+    if (m == 0) {
+	counters-> add.i += 1;
+	counters-> ret += 1;
+	
+	return n + 1;
+    } else if (n == 0) {
+	counters-> sub.i += 1;
+	counters-> ret += 1;
+	counters-> call += 1;
+	return ackermann(m - 1, 1, counters); 
+    } else {
+	counters-> sub.i += 2;
+	counters-> ret += 1;
+	counters-> call += 2;
+	return ackermann(m - 1, ackermann(m, n - 1, counters), counters); 
+    }
 }
 
 /*
  *   stress_cpu_ackermann
  *	compute ackermann function
  */
-static void stress_cpu_ackermann(const char *name)
+static void stress_cpu_ackermann(const char *name, perf_counter_array* counters)
 {
-	uint32_t a = ackermann(3, 7);
-
-	if ((g_opt_flags & OPT_FLAGS_VERIFY) && (a != 0x3fd))
-		pr_fail("%s: ackermann error detected, "
-			"ackermann(3,9) miscalculated\n", name);
+    uint32_t a = ackermann(3, 7, counters); 
+    
+    if ((g_opt_flags & OPT_FLAGS_VERIFY) && (a != 0x3fd))
+    pr_fail("%s: ackermann error detected, "
+	    "ackermann(3,9) miscalculated\n", name);
 }
 
 /*
  *   stress_cpu_explog
  *	compute exp(log(n))
  */
-static void HOT stress_cpu_explog(const char *name)
+static void HOT stress_cpu_explog(const char *name, perf_counter_array*)
 {
 	uint32_t i;
 	double n = 1e6;
@@ -1366,7 +1378,7 @@ do {						\
  *   stress_cpu_jmp
  *	jmp conditionals
  */
-static void HOT OPTIMIZE0 stress_cpu_jmp(const char *name)
+static void HOT OPTIMIZE0 stress_cpu_jmp(const char *name, perf_counter_array*)
 {
 	register int i, next = 0;
 
@@ -1432,7 +1444,7 @@ static uint16_t HOT OPTIMIZE3 ccitt_crc16(const uint8_t *data, size_t n)
  *   stress_cpu_crc16
  *	compute 1024 rounds of CCITT CRC16
  */
-static void stress_cpu_crc16(const char *name)
+static void stress_cpu_crc16(const char *name, perf_counter_array*)
 {
 	uint8_t buffer[1024];
 	size_t i;
@@ -1464,7 +1476,7 @@ static uint16_t HOT OPTIMIZE3 fletcher16(const uint8_t *data, const size_t len)
  *   stress_cpu_fletcher16()
  *	compute 1024 rounds of fletcher16 checksum
  */
-static void stress_cpu_fletcher16(const char *name)
+static void stress_cpu_fletcher16(const char *name, perf_counter_array*)
 {
 	uint8_t buffer[1024];
 	size_t i;
@@ -1480,7 +1492,7 @@ static void stress_cpu_fletcher16(const char *name)
  *   stress_cpu_ipv4checksum
  *	compute 1024 rounds of IPv4 checksum
  */
-static void stress_cpu_ipv4checksum(const char *name)
+static void stress_cpu_ipv4checksum(const char *name, perf_counter_array*)
 {
 	uint16_t buffer[512];
 	size_t i;
@@ -1520,7 +1532,7 @@ static inline long double complex HOT OPTIMIZE3 zeta(
  * stress_cpu_zeta()
  *	stress test Zeta(2.0)..Zeta(10.0)
  */
-static void stress_cpu_zeta(const char *name)
+static void stress_cpu_zeta(const char *name, perf_counter_array*)
 {
 	long double precision = 0.00000001L;
 	int i;
@@ -1541,7 +1553,7 @@ static void stress_cpu_zeta(const char *name)
  * stress_cpu_gamma()
  *	stress Euler-Mascheroni constant gamma
  */
-static void HOT OPTIMIZE3 stress_cpu_gamma(const char *name)
+static void HOT OPTIMIZE3 stress_cpu_gamma(const char *name, perf_counter_array*)
 {
 	long double precision = 1.0e-10L;
 	long double sum = 0.0L, k = 1.0L, _gamma = 0.0L, gammaold;
@@ -1573,7 +1585,7 @@ static void HOT OPTIMIZE3 stress_cpu_gamma(const char *name)
  *  Introduction to Signal Processing,
  *  Prentice-Hall, 1995, ISBN: 0-13-209172-0.
  */
-static void HOT OPTIMIZE3 stress_cpu_correlate(const char *name)
+static void HOT OPTIMIZE3 stress_cpu_correlate(const char *name, perf_counter_array*)
 {
 	size_t i, j;
 	double data_average = 0.0;
@@ -1608,7 +1620,7 @@ static void HOT OPTIMIZE3 stress_cpu_correlate(const char *name)
  * stress_cpu_sieve()
  * 	slightly optimised Sieve of Eratosthenes
  */
-static void HOT OPTIMIZE3 stress_cpu_sieve(const char *name)
+static void HOT OPTIMIZE3 stress_cpu_sieve(const char *name, perf_counter_array*)
 {
 	const double dsqrt = shim_sqrt(SIEVE_SIZE);
 	const uint32_t nsqrt = (uint32_t)dsqrt;
@@ -1658,7 +1670,7 @@ static inline HOT OPTIMIZE3 ALWAYS_INLINE uint32_t is_prime(uint32_t n)
  *  stress_cpu_prime()
  *
  */
-static void stress_cpu_prime(const char *name)
+static void stress_cpu_prime(const char *name, perf_counter_array*)
 {
 	uint32_t i, nprimes = 0;
 
@@ -1675,7 +1687,7 @@ static void stress_cpu_prime(const char *name)
  *  stress_cpu_gray()
  *	compute gray codes
  */
-static void OPTIMIZE3 TARGET_CLONES stress_cpu_gray(const char *name)
+static void OPTIMIZE3 TARGET_CLONES stress_cpu_gray(const char *name, perf_counter_array*)
 {
 	register uint32_t i;
 	register uint64_t sum = 0;
@@ -1737,7 +1749,7 @@ static uint32_t HOT hanoi(
  *  stress_cpu_hanoi
  *	stress with recursive Towers of Hanoi
  */
-static void stress_cpu_hanoi(const char *name)
+static void stress_cpu_hanoi(const char *name, perf_counter_array*)
 {
 	uint32_t n = hanoi(20, 'X', 'Y', 'Z');
 
@@ -1752,7 +1764,7 @@ static void stress_cpu_hanoi(const char *name)
  *  stress_floatconversion
  *	exercise conversion to/from different floating point values
  */
-static void TARGET_CLONES stress_cpu_floatconversion(const char *name)
+static void TARGET_CLONES stress_cpu_floatconversion(const char *name, perf_counter_array*)
 {
 	float f_sum = 0.0;
 	double d_sum = 0.0;
@@ -1812,7 +1824,7 @@ static void TARGET_CLONES stress_cpu_floatconversion(const char *name)
  *  stress_intconversion
  *	exercise conversion to/from different int values
  */
-static void stress_cpu_intconversion(const char *name)
+static void stress_cpu_intconversion(const char *name, perf_counter_array*)
 {
 	int16_t i16_sum = (int16_t)stress_mwc16();
 	int32_t i32_sum = (int32_t)stress_mwc32();
@@ -1935,7 +1947,7 @@ static inline long double HOT OPTIMIZE3 factorial(int n)
  *	compute pi using the Srinivasa Ramanujan
  *	fast convergence algorithm
  */
-static void HOT OPTIMIZE3 stress_cpu_pi(const char *name)
+static void HOT OPTIMIZE3 stress_cpu_pi(const char *name, perf_counter_array*)
 {
 	long double s = 0.0L, pi = 0.0L, last_pi = 0.0L;
 	const long double precision = 1.0e-20L;
@@ -1970,7 +1982,7 @@ static void HOT OPTIMIZE3 stress_cpu_pi(const char *name)
  *	compute the constant omega
  *	See http://en.wikipedia.org/wiki/Omega_constant
  */
-static void HOT OPTIMIZE3 stress_cpu_omega(const char *name)
+static void HOT OPTIMIZE3 stress_cpu_omega(const char *name, perf_counter_array*)
 {
 	long double omega = 0.5L, last_omega = 0.0L;
 	const long double precision = 1.0e-20L;
@@ -2063,7 +2075,7 @@ static uint8_t HOT OPTIMIZE3 hamming84(const uint8_t nybble)
  *  stress_cpu_hamming()
  *	compute hamming code on 65536 x 4 nybbles
  */
-static void OPTIMIZE3 TARGET_CLONES stress_cpu_hamming(const char *name)
+static void OPTIMIZE3 TARGET_CLONES stress_cpu_hamming(const char *name, perf_counter_array*)
 {
 	uint32_t i;
 	uint32_t sum = 0;
@@ -2114,7 +2126,7 @@ static ptrdiff_t stress_cpu_callfunc_func(
  *  stress_cpu_callfunc()
  *	deep function calls
  */
-static void stress_cpu_callfunc(const char *name)
+static void stress_cpu_callfunc(const char *name, perf_counter_array*)
 {
 	uint64_t	u64arg = stress_mwc64();
 	uint32_t	u32arg = stress_mwc32();
@@ -2144,7 +2156,7 @@ static const bool stress_cpu_parity_table[256] = {
  *  stress_cpu_parity
  *	compute parity different ways
  */
-static void stress_cpu_parity(const char *name)
+static void stress_cpu_parity(const char *name, perf_counter_array*)
 {
 	uint32_t val = 0x83fb5acf;
 	size_t i;
@@ -2250,7 +2262,7 @@ static void stress_cpu_parity(const char *name)
  *	perform 8 bit to 1 bit gray scale
  *	Floyd-Steinberg dither
  */
-static void TARGET_CLONES stress_cpu_dither(const char *name)
+static void TARGET_CLONES stress_cpu_dither(const char *name, perf_counter_array*)
 {
 	size_t x, y;
 
@@ -2315,7 +2327,7 @@ static void TARGET_CLONES stress_cpu_dither(const char *name)
  *	perform 50000 x 8 bit divisions, these are traditionally
  *	slow ops
  */
-static void TARGET_CLONES stress_cpu_div8(const char *name)
+static void TARGET_CLONES stress_cpu_div8(const char *name, perf_counter_array*)
 {
 	register uint16_t i = 50000, j = 0;
 	const uint8_t delta = 0xff / 224;
@@ -2341,7 +2353,7 @@ static void TARGET_CLONES stress_cpu_div8(const char *name)
  *	perform 50000 x 16 bit divisions, these are traditionally
  *	slow ops
  */
-static void TARGET_CLONES stress_cpu_div16(const char *name)
+static void TARGET_CLONES stress_cpu_div16(const char *name, perf_counter_array*)
 {
 	register uint16_t i = 50000, j = 0;
 	const uint16_t delta = 0xffff / 224;
@@ -2368,7 +2380,7 @@ static void TARGET_CLONES stress_cpu_div16(const char *name)
  *	perform 50000 x 32 bit divisions, these are traditionally
  *	slow ops
  */
-static void TARGET_CLONES stress_cpu_div32(const char *name)
+static void TARGET_CLONES stress_cpu_div32(const char *name, perf_counter_array*)
 {
 	register uint32_t i = 50000, j = 0;
 	const uint32_t delta = 0xffffffff / 224;
@@ -2395,7 +2407,7 @@ static void TARGET_CLONES stress_cpu_div32(const char *name)
  *	perform 50000 x 64 bit divisions, these are traditionally
  *	slow ops
  */
-static void TARGET_CLONES stress_cpu_div64(const char *name)
+static void TARGET_CLONES stress_cpu_div64(const char *name, perf_counter_array*)
 {
 	register uint64_t i = 50000, j = 0;
 	const uint64_t delta = 0xffffffffffffffffULL / 224;
@@ -2423,7 +2435,7 @@ static void TARGET_CLONES stress_cpu_div64(const char *name)
  *	perform 50000 x 128 bit divisions, these are traditionally
  *	slow ops
  */
-static void TARGET_CLONES stress_cpu_div128(const char *name)
+static void TARGET_CLONES stress_cpu_div128(const char *name, perf_counter_array*)
 {
 	register __uint128_t i = 50000, j = 0;
 	const uint64_t delta64 = 0xffffffffffffffffULL;
@@ -2451,7 +2463,7 @@ static void TARGET_CLONES stress_cpu_div128(const char *name)
  *  stress_cpu_union
  *	perform bit field operations on a union
  */
-static void TARGET_CLONES stress_cpu_union(const char *name)
+static void TARGET_CLONES stress_cpu_union(const char *name, perf_counter_array*)
 {
 	typedef union {
 		struct {
@@ -2548,7 +2560,7 @@ static uint32_t queens_try(
  *  stress_cpu_queens
  *	solve the queens problem for sizes 1..11
  */
-static void stress_cpu_queens(const char *name)
+static void stress_cpu_queens(const char *name, perf_counter_array*)
 {
 	uint32_t all, n;
 
@@ -2573,7 +2585,7 @@ static void stress_cpu_queens(const char *name)
  *	find factorials from 1..150 using
  *	Stirling's and Ramanujan's Approximations.
  */
-static void stress_cpu_factorial(const char *name)
+static void stress_cpu_factorial(const char *name, perf_counter_array*)
 {
 	int n;
 	long double f = 1.0L;
@@ -2610,7 +2622,7 @@ static void stress_cpu_factorial(const char *name)
  *  stress_cpu_stats
  *	Exercise some standard stats computations on random data
  */
-static void stress_cpu_stats(const char *name)
+static void stress_cpu_stats(const char *name, perf_counter_array*)
 {
 	size_t i;
 	double data[STATS_MAX];
@@ -2679,7 +2691,7 @@ static void stress_cpu_stats(const char *name)
  *  stress_cpu_all()
  *	dummy function, not called
  */
-static HOT OPTIMIZE3 void stress_cpu_all(const char *name)
+static HOT OPTIMIZE3 void stress_cpu_all(const char *name, perf_counter_array*)
 {
 	(void)name;
 }
@@ -2838,7 +2850,7 @@ static const stress_cpu_method_info_t cpu_methods[] = {
 
 static double stress_cpu_counter_scale[SIZEOF_ARRAY(cpu_methods)];
 
-static void stress_cpu_method(size_t method, const stress_args_t *args, double *counter)
+static void stress_cpu_method(size_t method, const stress_args_t *args, double *counter, perf_counter_array* counters)
 {
 	if (method == 0) {
 		static size_t i = 1;	/* Skip over stress_cpu_all */
@@ -2848,7 +2860,8 @@ static void stress_cpu_method(size_t method, const stress_args_t *args, double *
 		if (!cpu_methods[i].func)
 			i = 1;
 	}
-	cpu_methods[method].func(args->name);
+
+	cpu_methods[method].func(args->name, counters);
 	*counter += stress_cpu_counter_scale[method];
 	set_counter(args, (uint64_t)*counter);
 }
@@ -2913,6 +2926,10 @@ static double stress_per_cpu_time(void)
  */
 static int HOT OPTIMIZE3 stress_cpu(const stress_args_t *args)
 {
+
+    // Get the perf counter for the current thread
+    perf_counter_array * thread_counters = get_perf_counters ();
+    
 	double bias;
 	size_t cpu_method = 0;
 	int32_t cpu_load = 100;
@@ -2954,10 +2971,12 @@ static int HOT OPTIMIZE3 stress_cpu(const stress_args_t *args)
 	 */
 	if (cpu_load == 100) {
 		do {
-			stress_cpu_method(cpu_method, args, &counter);
+		    stress_cpu_method(cpu_method, args, &counter, thread_counters);
 		} while (keep_stressing(args));
 
 		stress_set_proc_state(args->name, STRESS_STATE_DEINIT);
+		print_perf_counters();
+		dump_perf_counters ("/tmp/");
 		return EXIT_SUCCESS;
 	}
 
@@ -2979,7 +2998,7 @@ static int HOT OPTIMIZE3 stress_cpu(const stress_args_t *args)
 			int j;
 
 			for (j = 0; j < -cpu_load_slice; j++) {
-				stress_cpu_method(cpu_method, args, &counter);
+			    stress_cpu_method(cpu_method, args, &counter, thread_counters);
 				if (!keep_stressing_flag())
 					break;
 			}
@@ -2989,7 +3008,7 @@ static int HOT OPTIMIZE3 stress_cpu(const stress_args_t *args)
 			const uint16_t r = stress_mwc16();
 			double slice_end = t1 + ((double)r / 131072.0);
 			do {
-				stress_cpu_method(cpu_method, args, &counter);
+			    stress_cpu_method(cpu_method, args, &counter, thread_counters);
 				t2 = stress_per_cpu_time();
 				if (!keep_stressing_flag())
 					break;
@@ -2999,7 +3018,7 @@ static int HOT OPTIMIZE3 stress_cpu(const stress_args_t *args)
 			const double slice_end = t1 + ((double)cpu_load_slice / 1000.0);
 
 			do {
-				stress_cpu_method(cpu_method, args, &counter);
+			    stress_cpu_method(cpu_method, args, &counter, thread_counters);
 				t2 = stress_per_cpu_time();
 				if (!keep_stressing_flag())
 					break;

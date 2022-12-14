@@ -28,6 +28,7 @@
 #include "core-syslog.h"
 #include "core-thermal-zone.h"
 #include "core-thrash.h"
+#include "perf-counter.h"
 
 #if defined(HAVE_SYS_UTSNAME_H)
 #include <sys/utsname.h>
@@ -3863,6 +3864,8 @@ int main(int argc, char **argv, char **envp)
 
 	main_pid = getpid();
 
+	init_perf_counters ();	
+
 	/* Enable stress-ng stack smashing message */
 	stress_set_stack_smash_check_flag(true);
 
@@ -4215,7 +4218,7 @@ int main(int argc, char **argv, char **envp)
 	pr_inf("%s run completed in %.2fs%s\n",
 		success ? "successful" : "unsuccessful",
 		duration, stress_duration_to_str(duration));
-
+	
 	/*
 	 *  Tidy up
 	 */

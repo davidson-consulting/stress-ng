@@ -127,6 +127,7 @@ HEADERS = \
 	core-vecmath.h \
 	stress-af-alg-defconfigs.h \
 	stress-ng.h \
+	perf-counter.h \
 	stress-version.h
 
 #
@@ -480,6 +481,7 @@ CORE_SRC = \
 	core-ftrace.c \
 	core-try-open.c \
 	core-vmstat.c \
+	perf-counter.c \
 	stress-ng.c
 
 SRC = $(CORE_SRC) $(STRESS_SRC)
