@@ -22,7 +22,7 @@ VERSION=0.15.01
 # Codename "frozen hedgehog"
 #
 
-CFLAGS += -Wall -Wextra -DVERSION='"$(VERSION)"' -O2 -std=gnu99
+CFLAGS += -Wall -Wextra -DVERSION='"$(VERSION)"' -std=gnu99
 
 #
 # Pedantic flags
