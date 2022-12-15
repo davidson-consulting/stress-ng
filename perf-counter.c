@@ -115,6 +115,11 @@ void print_perf_counters () {
 	printf ("%-15s %-15ld\n", "DIVL", perfs-> div.l);
 	printf ("%-15s %-15ld\n", "DIVF", perfs-> div.f);
 	printf ("%-15s %-15ld\n", "DIVD", perfs-> div.d);
+	
+	printf ("%-15s %-15ld\n", "XORI", perfs-> xor.i);
+	printf ("%-15s %-15ld\n", "XORL", perfs-> xor.l);
+	printf ("%-15s %-15ld\n", "XORF", perfs-> xor.f);
+	printf ("%-15s %-15ld\n", "XORD", perfs-> xor.d);
 
 	printf ("%-15s %-15ld\n", "LEA", perfs-> lea);
 	printf ("%-15s %-15ld\n", "CALL", perfs-> call);
@@ -128,6 +133,10 @@ void print_perf_counters () {
 	
 	printf ("%-15s %-15ld\n", "CVTSS2SIL", perfs-> cvtss2sil);
 	printf ("%-15s %-15ld\n", "CVTSI2SSL", perfs-> cvtsi2ssl);
+
+	printf ("%-15s %-15ld\n", "SHIFT", perfs-> shift);
+	printf ("%-15s %-15ld\n", "NOT", perfs-> noti);
+	printf ("%-15s %-15ld\n", "PUSH", perfs-> push);
     }
     
     pthread_mutex_unlock(&mutex);
@@ -193,6 +202,11 @@ void dump_perf_counters (const char * prefix) {
 	fprintf (file, "%-15s %-15ld\n", "DIVF", perfs-> div.f);
 	fprintf (file, "%-15s %-15ld\n", "DIVD", perfs-> div.d);
 
+	fprintf (file, "%-15s %-15ld\n", "XORI", perfs-> xor.i);
+	fprintf (file, "%-15s %-15ld\n", "XORL", perfs-> xor.l);
+	fprintf (file, "%-15s %-15ld\n", "XORF", perfs-> xor.f);
+	fprintf (file, "%-15s %-15ld\n", "XORD", perfs-> xor.d);
+	
 	fprintf (file, "%-15s %-15ld\n", "LEA", perfs-> lea);
 	fprintf (file, "%-15s %-15ld\n", "CALL", perfs-> call);
 	fprintf (file, "%-15s %-15ld\n", "RET", perfs-> ret);
@@ -205,6 +219,10 @@ void dump_perf_counters (const char * prefix) {
 	
 	fprintf (file, "%-15s %-15ld\n", "CVTSS2SIL", perfs-> cvtss2sil);
 	fprintf (file, "%-15s %-15ld\n", "CVTSI2SSL", perfs-> cvtsi2ssl);
+
+	fprintf (file, "%-15s %-15ld\n", "SHIFT", perfs-> shift);
+	fprintf (file, "%-15s %-15ld\n", "NOT", perfs-> noti);
+	fprintf (file, "%-15s %-15ld\n", "PUSH", perfs-> push);
     }
 
     fclose (file);    

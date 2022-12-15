@@ -49,6 +49,9 @@ typedef struct perf_counter_array {
     // Division
     perf_counter div;
 
+    // Xor
+    perf_counter xor;
+    
     // Address to reg
     uint64_t lea;
     
@@ -78,6 +81,15 @@ typedef struct perf_counter_array {
 
     // Conditional jump (je, jleq, jgeq, etc.)
     uint64_t cjmp;
+
+    // shr, lhr
+    uint64_t shift;
+
+    // Stack push
+    uint64_t push;
+    
+    // not instruction
+    uint64_t noti;
     
 } perf_counter_array;
 

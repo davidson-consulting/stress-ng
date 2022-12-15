@@ -213,32 +213,63 @@ static void OPTIMIZE0 stress_cpu_loop(const char *name, perf_counter_array*)
  *  stress_cpu_gcd()
  *	compute Greatest Common Divisor
  */
-static void OPTIMIZE3 TARGET_CLONES stress_cpu_gcd(const char *name, perf_counter_array*)
+static void OPTIMIZE3 TARGET_CLONES stress_cpu_gcd(const char *name, perf_counter_array* counters)
 {
 	uint32_t i, gcd_sum = 0;
 	const uint32_t gcd_checksum = 63000868UL;
 	uint64_t lcm_sum = 0;
 	const uint64_t lcm_checksum = 41637399273ULL;
 
+	counters-> mov.i += 1;
+	counters-> xor.i += 3;
+	
 	for (i = 0; i < 16384; i++) {
+	    counters-> add.i += 1;
+	    counters-> cjmp += 1;
+	    counters-> mov.i += 3;
+	    counters-> xor.i += 2;
+	    counters-> add.i += 1;
+	    counters-> div.i += 1;
+	    counters-> mul.i += 1;
+	    
 		register uint32_t a = i, b = i % (3 + (1997 ^ i));
 		register uint64_t lcm = ((uint64_t)a * b);
 
+		counters-> cjmp += 1;
 		while (b != 0) {
 			register uint32_t r = b;
 			b = a % b;
 			a = r;
+			counters-> mov.i += 3;
+			counters-> div.i += 1;
+			counters-> xor.i += 1;
+			counters-> cjmp += 1;
 		}
-		if (a)
+		
+		if (a) {
 			lcm_sum += (lcm / a);
+			counters-> mov.i += 2;
+			counters-> xor.i += 1;
+			counters-> add.i += 1;
+			counters-> div.i += 1;
+		}
+		
 		gcd_sum += a;
 		FORCE_DO_NOTHING();
+		counters-> jmp += 1;
 	}
-	if ((g_opt_flags & OPT_FLAGS_VERIFY) &&
-	    (gcd_sum != gcd_checksum) &&
-	    (lcm_sum != lcm_checksum))
-		pr_fail("%s: gcd error detected, failed modulo "
-			"or assignment operations\n", name);
+	
+	counters-> cjmp += 1;
+	if ((g_opt_flags & OPT_FLAGS_VERIFY)) {
+	    counters-> cjmp += 1;
+	    if (gcd_sum != gcd_checksum) {
+		counters-> cjmp += 1;
+		if ((lcm_sum != lcm_checksum)) {
+		    pr_fail("%s: gcd error detected, failed modulo "
+			    "or assignment operations\n", name);
+		}
+	    }
+	}
 }
 
 /*
@@ -1412,7 +1443,7 @@ static void HOT OPTIMIZE0 stress_cpu_jmp(const char *name, perf_counter_array*)
  *  ccitt_crc16()
  *	perform naive CCITT CRC16
  */
-static uint16_t HOT OPTIMIZE3 ccitt_crc16(const uint8_t *data, size_t n)
+static uint16_t HOT OPTIMIZE3 ccitt_crc16(const uint8_t *data, size_t n, perf_counter_array * counters)
 {
 	/*
 	 *  The CCITT CRC16 polynomial is
@@ -1429,21 +1460,34 @@ static uint16_t HOT OPTIMIZE3 ccitt_crc16(const uint8_t *data, size_t n)
 	const uint16_t polynomial = 0x8408;
 	register uint16_t crc = 0xffff;
 
-	if (!n)
+	counters-> cjmp += 1;
+	if (!n) {
 		return 0;
+	}
 
 	for (; n; n--) {
 		uint8_t i;
 		uint8_t val = (uint16_t)0xff & *data++;
-
+		counters-> mov.i += 4;
+		counters-> add.i += 1;
+		counters-> xor.i += 1;
+		counters-> shift += 1;
+		
 		for (i = 8; i; --i, val >>= 1) {
+		    counters-> xor.i += 2;
+		    counters-> cmov.i += 1;
+		    counters-> mov.i += 3;
+		    counters-> shift += 2;
 			bool do_xor = 1 & (val ^ crc);
 			crc >>= 1;
 			crc ^= do_xor ? polynomial : 0;
 		}
+		counters-> cjmp += 1;
 	}
 
 	crc = ~crc;
+	counters-> noti += 1;
+	counters-> shift += 2;
 	return ((uint16_t)(crc << 8)) | (crc >> 8);
 }
 
@@ -1451,7 +1495,7 @@ static uint16_t HOT OPTIMIZE3 ccitt_crc16(const uint8_t *data, size_t n)
  *   stress_cpu_crc16
  *	compute 1024 rounds of CCITT CRC16
  */
-static void stress_cpu_crc16(const char *name, perf_counter_array*)
+static void stress_cpu_crc16(const char *name, perf_counter_array* counters)
 {
 	uint8_t buffer[1024];
 	size_t i;
@@ -1460,7 +1504,7 @@ static void stress_cpu_crc16(const char *name, perf_counter_array*)
 
 	random_buffer(buffer, sizeof(buffer));
 	for (i = 1; i < sizeof(buffer); i++)
-		stress_uint64_put(ccitt_crc16(buffer, i));
+	stress_uint64_put(ccitt_crc16(buffer, i, counters));
 }
 
 /*
@@ -2113,41 +2157,59 @@ static ptrdiff_t stress_cpu_callfunc_func(
 	uint64_t	*p_u64arg,
 	uint32_t	*p_u32arg,
 	uint16_t	*p_u16arg,
-	uint8_t		*p_u8arg)
+	uint8_t		*p_u8arg,
+	perf_counter_array * counters)
 {
-	if (LIKELY(n > 0))
-		return stress_cpu_callfunc_func(n - 1,
-			u64arg + (uint64_t)u32arg,
-			u32arg,
-			u16arg,
-			u8arg,
-			p_u64arg,
-			p_u32arg,
-			p_u16arg,
-			p_u8arg);
-	else
-		return &u64arg - p_u64arg;
+    counters-> mov.i += 10;
+    counters-> sub.i += 1;
+    counters-> cjmp += 1;
+    
+    if (LIKELY(n > 0)) {
+	counters-> mov.i += 11;
+	counters-> add.i += 2;
+	counters-> push += 3;
+	counters-> lea += 1;
+	counters-> call += 1;
+	counters-> jmp += 1;
+	counters-> ret += 1;
+	
+	return stress_cpu_callfunc_func(n - 1,
+					u64arg + (uint64_t)u32arg,
+					u32arg,
+					u16arg,
+					u8arg,
+					p_u64arg,
+					p_u32arg,
+					p_u16arg,
+					p_u8arg, counters
+	    );
+    } else {
+	counters-> lea += 1;
+	counters-> sub.i += 1;
+	counters-> shift += 1;
+	return &u64arg - p_u64arg;
+    }
 }
 
 /*
  *  stress_cpu_callfunc()
  *	deep function calls
  */
-static void stress_cpu_callfunc(const char *name, perf_counter_array*)
+static void stress_cpu_callfunc(const char *name, perf_counter_array* counters)
 {
-	uint64_t	u64arg = stress_mwc64();
-	uint32_t	u32arg = stress_mwc32();
-	uint16_t	u16arg = stress_mwc16();
-	uint8_t		u8arg  = stress_mwc8();
-	ptrdiff_t	ret;
+    uint64_t	u64arg = stress_mwc64();
+    uint32_t	u32arg = stress_mwc32();
+    uint16_t	u16arg = stress_mwc16();
+    uint8_t		u8arg  = stress_mwc8();
+    ptrdiff_t	ret;
+	
+    (void)name;
 
-	(void)name;
+    ret = stress_cpu_callfunc_func(1024,
+				   u64arg, u32arg, u16arg, u8arg,
+				   &u64arg, &u32arg, &u16arg, &u8arg, counters);
 
-	ret = stress_cpu_callfunc_func(1024,
-		u64arg, u32arg, u16arg, u8arg,
-		&u64arg, &u32arg, &u16arg, &u8arg);
-
-	stress_uint64_put((uint64_t)ret);
+    stress_uint64_put((uint64_t)ret);
 }
 
 
