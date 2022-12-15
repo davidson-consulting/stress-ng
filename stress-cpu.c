@@ -1314,20 +1314,27 @@ static void OPTIMIZE3 TARGET_CLONES stress_cpu_ln2(const char *name, perf_counte
  */
 static uint32_t HOT ackermann(const uint32_t m, const uint32_t n, perf_counter_array * counters) 
 {
+    counters-> mov.i += 3;
+    counters-> cjmp += 1;
     if (m == 0) {
-	/* counters-> cjmp += 1; */
-	/* counters-> lea += 1; */
+	counters-> add.i += 1;
+	counters-> jmp += 1;
+	counters-> ret += 1;
 	return n + 1;
-    } else if (n == 0) {
-	/* counters-> lea += 1; */
-	/* counters-> mov.i += 1; */
+    } else if (n == 0) {	
+	counters-> mov.i += 5;
+	counters-> call += 1;
+	counters-> jmp += 1;
+	counters-> cjmp += 1;
+	counters-> lea += 1;
 	
 	return ackermann(m - 1, 1, counters); 
     } else {
-	
-	/* counters-> sub.i += 2; */
-	/* counters-> ret += 1; */
-	/* counters-> call += 2; */
+	counters-> mov.i += 10;
+	counters-> lea += 2;
+	counters-> call += 2;
+	counters-> cjmp += 1;
+
 	return ackermann(m - 1, ackermann(m, n - 1, counters), counters); 
     }
 }
